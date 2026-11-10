@@ -112,6 +112,21 @@ public class CombatTests
     }
 
     [TestMethod]
+    public void GetCombatStatsDisplay_IncludesPlayerGold()
+    {
+        Player player = CreateTestPlayer();
+        player.Gold = 137;
+        Dragon dragon = CreateTestDragon();
+        Messages messages = CreateEnglishMessages();
+
+        Combat combat = new Combat(player, dragon, messages);
+
+        string result = combat.GetCombatStatsDisplay();
+
+        StringAssert.Contains(result, messages.GetMessage("stats_gold") + 137);
+    }
+
+    [TestMethod]
     public void GetCombatStatsDisplay_IncludesDragonCombatStats()
     {
         Player player = CreateTestPlayer();
