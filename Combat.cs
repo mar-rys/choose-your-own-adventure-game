@@ -60,6 +60,9 @@ public class Combat
         output.Add(messages.GetMessage("stats_gold") + player.Gold);
         output.Add(messages.GetMessage("stats_protection") + player.Protection);
 
+        if (player.Armor != null)
+            output.Add(messages.GetMessage("stats_armor") + messages.TranslateWeaponForDisplay(player.Armor.Name));
+
         if (player.Weapon != null)
         {
             output.Add(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(player.Weapon.Type));

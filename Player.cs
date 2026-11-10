@@ -160,6 +160,9 @@ public class Player
         Console.WriteLine(messages.GetMessage("stats_gold") + Gold);
         Console.WriteLine(messages.GetMessage("stats_protection") + Protection);
 
+        if (Armor != null)
+            Console.WriteLine(messages.GetMessage("stats_armor") + messages.TranslateWeaponForDisplay(Armor.Name));
+
         if (Weapon != null)
         {
             Console.WriteLine(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(Weapon.Type));

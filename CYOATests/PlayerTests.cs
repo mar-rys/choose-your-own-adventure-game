@@ -150,6 +150,22 @@ public class PlayerCharacterCreationTests
     }
 
     [TestMethod]
+    public void DisplayStats_ShowsArmorNameInPlayersLanguage()
+    {
+        Player player = new Player { Name = "TestHero", Race = "Human", Occupation = "Fighter", Armor = new Armor("magic armor", 3) };
+        Messages messages = new Messages();
+        messages.SetCurrentLanguage("Spanish");
+        messages.ReadDictionary();
+
+        using StringWriter writer = new StringWriter();
+        Console.SetOut(writer);
+
+        player.DisplayStats(messages);
+
+        StringAssert.Contains(writer.ToString(), "Armadura: armadura magica");
+    }
+
+    [TestMethod]
     public void CreateCharacter_RepromptsForGoldRollOnInvalidInput()
     {
         Player player = new Player();

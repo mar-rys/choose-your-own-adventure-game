@@ -142,6 +142,35 @@ public class CombatTests
     }
 
     [TestMethod]
+    public void GetCombatStatsDisplay_ShowsArmorNameWhenWorn()
+    {
+        Player player = CreateTestPlayer();
+        player.Armor = new Armor("magic armor", 3);
+        Dragon dragon = CreateTestDragon();
+        Messages messages = CreateEnglishMessages();
+
+        Combat combat = new Combat(player, dragon, messages);
+
+        string result = combat.GetCombatStatsDisplay();
+
+        StringAssert.Contains(result, messages.GetMessage("stats_armor") + "magic armor");
+    }
+
+    [TestMethod]
+    public void GetCombatStatsDisplay_OmitsArmorLineWithoutArmor()
+    {
+        Player player = CreateTestPlayer();
+        Dragon dragon = CreateTestDragon();
+        Messages messages = CreateEnglishMessages();
+
+        Combat combat = new Combat(player, dragon, messages);
+
+        string result = combat.GetCombatStatsDisplay();
+
+        Assert.IsFalse(result.Contains(messages.GetMessage("stats_armor")));
+    }
+
+    [TestMethod]
     public void GetCombatStatsDisplay_IncludesDragonCombatStats()
     {
         Player player = CreateTestPlayer();

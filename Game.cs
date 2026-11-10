@@ -11,6 +11,7 @@ public class Game
         Die die = new Die();
 
         Dragon dragon = new Dragon(die);
+        Merchant merchant = new Merchant();
 
         // Language selection shown before Messages dictionary is loaded
         Console.WriteLine("Select language / Selecciona idioma / Choisissez la langue / Seleziona la lingua:");
@@ -55,7 +56,7 @@ public class Game
                     }
                     else if (selectedPath == "south")
                     {
-                        Console.WriteLine(messages.GetMessage("south_path_narrative"));
+                        HandleMerchantEncounter(player, merchant, messages);
                     }
                     else if (selectedPath == "north")
                     {
@@ -130,6 +131,66 @@ public class Game
                 return "exit";
 
             Console.WriteLine(messages.GetMessage("path_invalid"));
+        }
+    }
+
+    // Thin console layer over the Merchant: reads choices and turns its results into messages.
+    private void HandleMerchantEncounter(Player player, Merchant merchant, Messages messages)
+    {
+        if (merchant.EncounterUsed)
+        {
+            Console.WriteLine(messages.GetMessage("merchant_moved_on"));
+            return;
+        }
+
+        Console.WriteLine(messages.GetMessage("merchant_intro"));
+
+        if (!merchant.CanAffordAnything(player))
+        {
+            Console.WriteLine(messages.GetMessage("merchant_cant_afford_anything"));
+            merchant.Leave();
+        }
+        else
+        {
+            RunMerchantMenu(player, merchant, messages);
+        }
+
+        Console.WriteLine(messages.GetMessage("merchant_return"));
+    }
+
+    private void RunMerchantMenu(Player player, Merchant merchant, Messages messages)
+    {
+        while (true)
+        {
+            Console.WriteLine(string.Format(messages.GetMessage("merchant_offer"), player.Gold, Merchant.ArmorPrice));
+            Console.WriteLine(messages.GetMessage("merchant_menu"));
+            Console.Write(messages.GetMessage("enter_choice"));
+            string? input = Console.ReadLine()?.Trim();
+
+            if (input == "1")
+            {
+                switch (merchant.BuyArmor(player))
+                {
+                    case PurchaseResult.Success:
+                        Console.WriteLine(string.Format(messages.GetMessage("merchant_armor_bought"), Merchant.ArmorPrice, player.Protection));
+                        return;
+                    case PurchaseResult.CantAfford:
+                        Console.WriteLine(messages.GetMessage("merchant_cant_afford"));
+                        break;
+                    case PurchaseResult.EncounterUsed:
+                        Console.WriteLine(messages.GetMessage("merchant_moved_on"));
+                        return;
+                }
+            }
+            else if (input == "3")
+            {
+                merchant.Leave();
+                return;
+            }
+            else
+            {
+                Console.WriteLine(messages.GetMessage("merchant_invalid"));
+            }
         }
     }
 
