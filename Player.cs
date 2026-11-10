@@ -12,6 +12,9 @@ public class Player
     public int Gold { get; set; }
 
     public Weapon? Weapon { get; set; }
+    public Armor? Armor { get; set; }
+
+    public int Protection => Armor?.Protection ?? 0;
 
     public void CreateCharacter(Messages messages)
     {
@@ -155,12 +158,18 @@ public class Player
         Console.WriteLine(messages.GetMessage("stats_agility") + Agility);
         Console.WriteLine(messages.GetMessage("stats_health") + HealthPoints);
         Console.WriteLine(messages.GetMessage("stats_gold") + Gold);
+        Console.WriteLine(messages.GetMessage("stats_protection") + Protection);
 
         if (Weapon != null)
         {
             Console.WriteLine(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(Weapon.Type));
             Console.WriteLine(messages.GetMessage("stats_damage") + Weapon.MaxDamage);
         }
+    }
+
+    public int ApplyProtection(int rawDamage)
+    {
+        return Math.Max(0, rawDamage - Protection);
     }
 
     public int RollAttack()

@@ -18,6 +18,30 @@ public class PlayerTests
 
         Assert.IsNull(player.Weapon);
     }
+
+    [TestMethod]
+    public void ApplyProtection_WithNoArmor_TakesFullDamage()
+    {
+        Player player = new Player();
+
+        Assert.AreEqual(12, player.ApplyProtection(12));
+    }
+
+    [TestMethod]
+    public void ApplyProtection_WithProtection3_Reduces12DamageTo9()
+    {
+        Player player = new Player { Armor = new Armor("magic armor", 3) };
+
+        Assert.AreEqual(9, player.ApplyProtection(12));
+    }
+
+    [TestMethod]
+    public void ApplyProtection_NeverReturnsNegativeDamage()
+    {
+        Player player = new Player { Armor = new Armor("magic armor", 3) };
+
+        Assert.AreEqual(0, player.ApplyProtection(2));
+    }
 }
 
 [TestClass]
@@ -76,6 +100,17 @@ public class PlayerCharacterCreationTests
     }
 
     [TestMethod]
+    public void CreateCharacter_StartsWithNoArmorAndProtection0()
+    {
+        Player player = new Player();
+
+        RunScriptedCreation(player, GetMessages(), ScriptedCreation);
+
+        Assert.IsNull(player.Armor);
+        Assert.AreEqual(0, player.Protection);
+    }
+
+    [TestMethod]
     public void CreateCharacter_ShowsTheRolledGold()
     {
         Player player = new Player();
@@ -98,6 +133,20 @@ public class PlayerCharacterCreationTests
         player.DisplayStats(messages);
 
         StringAssert.Contains(writer.ToString(), messages.GetMessage("stats_gold") + 137);
+    }
+
+    [TestMethod]
+    public void DisplayStats_ShowsProtectionLine()
+    {
+        Player player = new Player { Name = "TestHero", Race = "Human", Occupation = "Fighter", Armor = new Armor("magic armor", 3) };
+        Messages messages = GetMessages();
+
+        using StringWriter writer = new StringWriter();
+        Console.SetOut(writer);
+
+        player.DisplayStats(messages);
+
+        StringAssert.Contains(writer.ToString(), messages.GetMessage("stats_protection") + 3);
     }
 
     [TestMethod]
