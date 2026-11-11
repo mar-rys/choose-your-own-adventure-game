@@ -76,11 +76,58 @@ public class MerchantEncounterTests
         string output = RunEncounter(player, merchant, messages, "x\n1\n");
 
         StringAssert.Contains(output, messages.GetMessage("merchant_intro"));
-        StringAssert.Contains(output, string.Format(messages.GetMessage("merchant_offer"), 100, Merchant.ArmorPrice));
+        StringAssert.Contains(output, string.Format(messages.GetMessage("merchant_offer"), 100, Merchant.ArmorPrice, Merchant.MagicWeaponPrice));
         StringAssert.Contains(output, messages.GetMessage("merchant_invalid"));
         StringAssert.Contains(output, messages.GetMessage("merchant_return"));
         Assert.AreEqual(20, player.Gold);
         Assert.AreEqual(3, player.Protection);
+    }
+
+    [TestMethod]
+    [DataRow("English")]
+    [DataRow("Spanish")]
+    [DataRow("French")]
+    [DataRow("Italian")]
+    public void MerchantEncounter_BuyingMagicWeapon_RunsWithoutThrowing(string language)
+    {
+        Messages messages = GetMessages(language);
+        Player player = CreatePlayerWithGold(150);
+        Merchant merchant = new Merchant();
+
+        string output = RunEncounter(player, merchant, messages, "2\n");
+
+        StringAssert.Contains(output, string.Format(messages.GetMessage("merchant_offer"), 150, Merchant.ArmorPrice, Merchant.MagicWeaponPrice));
+        StringAssert.Contains(output, string.Format(
+            messages.GetMessage("merchant_weapon_bought"),
+            Merchant.MagicWeaponPrice,
+            messages.TranslateWeaponForDisplay("magic long sword"),
+            16));
+        StringAssert.Contains(output, messages.GetMessage("merchant_return"));
+        Assert.AreEqual(30, player.Gold);
+        Assert.AreEqual("magic long sword", player.Weapon!.Type);
+        Assert.AreEqual(16, player.Weapon.MaxDamage);
+    }
+
+    [TestMethod]
+    public void MerchantEncounter_MagicWeaponUnaffordable_ShowsCantAffordAndReShowsTheMenu()
+    {
+        Messages messages = GetMessages("English");
+        Player player = CreatePlayerWithGold(100);
+        Merchant merchant = new Merchant();
+
+        // 2 (too expensive), then 3 to leave.
+        string output = RunEncounter(player, merchant, messages, "2\n3\n");
+
+        StringAssert.Contains(output, messages.GetMessage("merchant_cant_afford"));
+        int firstMenu = output.IndexOf(messages.GetMessage("merchant_menu"));
+        int cantAfford = output.IndexOf(messages.GetMessage("merchant_cant_afford"));
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("merchant_menu"), cantAfford) > cantAfford,
+            "The menu should be shown again after the can't-afford message.");
+        Assert.IsTrue(firstMenu < cantAfford);
+        Assert.AreEqual(100, player.Gold);
+        Assert.AreEqual("long sword", player.Weapon!.Type);
+        Assert.AreEqual(12, player.Weapon.MaxDamage);
+        Assert.IsTrue(merchant.EncounterUsed);
     }
 
     [TestMethod]

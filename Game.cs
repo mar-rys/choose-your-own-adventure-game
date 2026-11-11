@@ -162,25 +162,25 @@ public class Game
     {
         while (true)
         {
-            Console.WriteLine(string.Format(messages.GetMessage("merchant_offer"), player.Gold, Merchant.ArmorPrice));
+            Console.WriteLine(string.Format(messages.GetMessage("merchant_offer"), player.Gold, Merchant.ArmorPrice, Merchant.MagicWeaponPrice));
             Console.WriteLine(messages.GetMessage("merchant_menu"));
             Console.Write(messages.GetMessage("enter_choice"));
             string? input = Console.ReadLine()?.Trim();
 
             if (input == "1")
             {
-                switch (merchant.BuyArmor(player))
-                {
-                    case PurchaseResult.Success:
-                        Console.WriteLine(string.Format(messages.GetMessage("merchant_armor_bought"), Merchant.ArmorPrice, player.Protection));
-                        return;
-                    case PurchaseResult.CantAfford:
-                        Console.WriteLine(messages.GetMessage("merchant_cant_afford"));
-                        break;
-                    case PurchaseResult.EncounterUsed:
-                        Console.WriteLine(messages.GetMessage("merchant_moved_on"));
-                        return;
-                }
+                if (ShowPurchaseResult(merchant.BuyArmor(player), messages, () => string.Format(
+                        messages.GetMessage("merchant_armor_bought"), Merchant.ArmorPrice, player.Protection)))
+                    return;
+            }
+            else if (input == "2")
+            {
+                if (ShowPurchaseResult(merchant.BuyMagicWeapon(player), messages, () => string.Format(
+                        messages.GetMessage("merchant_weapon_bought"),
+                        Merchant.MagicWeaponPrice,
+                        messages.TranslateWeaponForDisplay(player.Weapon!.Type),
+                        player.Weapon.MaxDamage)))
+                    return;
             }
             else if (input == "3")
             {
@@ -191,6 +191,26 @@ public class Game
             {
                 Console.WriteLine(messages.GetMessage("merchant_invalid"));
             }
+        }
+    }
+
+    // Prints the outcome of a purchase. The confirmation is built only after a successful
+    // purchase, so it reads the player's new state. Returns true when the encounter is over.
+    private static bool ShowPurchaseResult(PurchaseResult result, Messages messages, Func<string> boughtMessage)
+    {
+        switch (result)
+        {
+            case PurchaseResult.Success:
+                Console.WriteLine(boughtMessage());
+                return true;
+            case PurchaseResult.CantAfford:
+                Console.WriteLine(messages.GetMessage("merchant_cant_afford"));
+                return false;
+            case PurchaseResult.EncounterUsed:
+                Console.WriteLine(messages.GetMessage("merchant_moved_on"));
+                return true;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(result), result, null);
         }
     }
 
