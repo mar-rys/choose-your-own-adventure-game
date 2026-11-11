@@ -147,60 +147,6 @@ public class MessagesTests
         }
     }
 
-    [TestMethod]
-    public void ReadDictionary_AllRequiredKeysExistInSpanish()
-    {
-        Messages messages = new Messages();
-        messages.SetCurrentLanguage("Spanish");
-        messages.ReadDictionary();
-
-        string[] requiredKeys = { "welcome", "menu",
-                                   "choose_path", "path_north", "path_south", "attack_prompt",
-                                   "victory", "defeat", "retreat", "invalid", "goodbye" };
-
-        foreach (string key in requiredKeys)
-        {
-            string result = messages.GetMessage(key);
-            Assert.AreNotEqual($"[{key}]", result, $"Key '{key}' is missing from Spanish dictionary.");
-        }
-    }
-
-    [TestMethod]
-    public void ReadDictionary_AllRequiredKeysExistInFrench()
-    {
-        Messages messages = new Messages();
-        messages.SetCurrentLanguage("French");
-        messages.ReadDictionary();
-
-        string[] requiredKeys = { "welcome", "menu",
-                                   "choose_path", "path_north", "path_south", "attack_prompt",
-                                   "victory", "defeat", "retreat", "invalid", "goodbye" };
-
-        foreach (string key in requiredKeys)
-        {
-            string result = messages.GetMessage(key);
-            Assert.AreNotEqual($"[{key}]", result, $"Key '{key}' is missing from French dictionary.");
-        }
-    }
-
-    [TestMethod]
-    public void ReadDictionary_AllRequiredKeysExistInItalian()
-    {
-        Messages messages = new Messages();
-        messages.SetCurrentLanguage("Italian");
-        messages.ReadDictionary();
-
-        string[] requiredKeys = { "welcome", "menu",
-                                   "choose_path", "path_north", "path_south", "attack_prompt",
-                                   "victory", "defeat", "retreat", "invalid", "goodbye" };
-
-        foreach (string key in requiredKeys)
-        {
-            string result = messages.GetMessage(key);
-            Assert.AreNotEqual($"[{key}]", result, $"Key '{key}' is missing from Italian dictionary.");
-        }
-    }
-
     // --- IsValidRace ---
 
     [TestMethod]
@@ -347,18 +293,27 @@ public class MessagesTests
     }
 
     [TestMethod]
-    public void ReadDictionary_ItalianHasEveryEnglishKey()
+    [DataRow("Spanish")]
+    [DataRow("French")]
+    [DataRow("Italian")]
+    public void ReadDictionary_LanguageHasEveryEnglishKey(string language)
     {
-        Messages italian = new Messages();
-        italian.SetCurrentLanguage("Italian");
-        italian.ReadDictionary();
+        Messages messages = new Messages();
+        messages.SetCurrentLanguage(language);
+        messages.ReadDictionary();
 
         string jsonPath = Path.Combine(AppContext.BaseDirectory, "language_data.json");
         using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(jsonPath));
+        List<string> missing = new List<string>();
         foreach (System.Text.Json.JsonProperty entry in doc.RootElement.GetProperty("English").GetProperty("dictionary").EnumerateObject())
         {
-            Assert.AreNotEqual($"[{entry.Name}]", italian.GetMessage(entry.Name),
-                $"Key '{entry.Name}' is missing from Italian dictionary.");
+            if (messages.GetMessage(entry.Name) == $"[{entry.Name}]")
+            {
+                missing.Add(entry.Name);
+            }
         }
+
+        Assert.AreEqual(0, missing.Count,
+            $"{language} dictionary is missing English keys: {string.Join(", ", missing)}");
     }
 }

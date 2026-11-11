@@ -57,6 +57,11 @@ public class Combat
         output.Add(messages.GetMessage("stats_strength") + player.Strength);
         output.Add(messages.GetMessage("stats_agility") + player.Agility);
         output.Add(messages.GetMessage("stats_health") + player.HealthPoints);
+        output.Add(messages.GetMessage("stats_gold") + player.Gold);
+        output.Add(messages.GetMessage("stats_protection") + player.Protection);
+
+        if (player.Armor != null)
+            output.Add(messages.GetMessage("stats_armor") + messages.TranslateWeaponForDisplay(player.Armor.Name));
 
         if (player.Weapon != null)
         {

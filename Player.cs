@@ -9,8 +9,12 @@ public class Player
     public int Strength { get; set; }
     public int Agility { get; set; }
     public int HealthPoints { get; set; }
+    public int Gold { get; set; }
 
     public Weapon? Weapon { get; set; }
+    public Armor? Armor { get; set; }
+
+    public int Protection => Armor?.Protection ?? 0;
 
     public void CreateCharacter(Messages messages)
     {
@@ -23,6 +27,7 @@ public class Player
         int strengthModifier = RollStrength(messages);
         RollAgility(messages);
         RollHealthPoints(messages, strengthModifier);
+        RollGold(messages);
 
         PromptForNextAction(messages);
     }
@@ -120,6 +125,13 @@ public class Player
         HealthPoints = _die.Roll(20) + strengthModifier;
     }
 
+    private void RollGold(Messages messages)
+    {
+        PromptRoll(messages.GetMessage("roll_gold"), messages);
+        Gold = _die.Roll(20) * 10;
+        Console.WriteLine(string.Format(messages.GetMessage("gold_rolled"), Gold));
+    }
+
     private void PromptForNextAction(Messages messages)
     {
         while (true)
@@ -145,12 +157,22 @@ public class Player
         Console.WriteLine(messages.GetMessage("stats_strength") + Strength);
         Console.WriteLine(messages.GetMessage("stats_agility") + Agility);
         Console.WriteLine(messages.GetMessage("stats_health") + HealthPoints);
+        Console.WriteLine(messages.GetMessage("stats_gold") + Gold);
+        Console.WriteLine(messages.GetMessage("stats_protection") + Protection);
+
+        if (Armor != null)
+            Console.WriteLine(messages.GetMessage("stats_armor") + messages.TranslateWeaponForDisplay(Armor.Name));
 
         if (Weapon != null)
         {
             Console.WriteLine(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(Weapon.Type));
             Console.WriteLine(messages.GetMessage("stats_damage") + Weapon.MaxDamage);
         }
+    }
+
+    public int ApplyProtection(int rawDamage)
+    {
+        return Math.Max(0, rawDamage - Protection);
     }
 
     public int RollAttack()
