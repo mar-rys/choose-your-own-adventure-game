@@ -1,15 +1,15 @@
 public class Combat
 {
     public Player player { get; set; }
-    public Dragon dragon { get; set; }
+    public Foe foe { get; set; }
     public Messages messages { get; set; }
 
     public bool PlayerRetreated { get; private set; }
 
-    public Combat(Player player, Dragon dragon, Messages messages)
+    public Combat(Player player, Foe foe, Messages messages)
     {
         this.player = player;
-        this.dragon = dragon;
+        this.foe = foe;
         this.messages = messages;
         PlayerRetreated = false;
     }
@@ -20,12 +20,12 @@ public class Combat
 
         while (true)
         {
-            PlayerAttacksDragonSequence();
+            PlayerAttacksFoeSequence();
 
-            if (dragon.HealthPoints <= 0)
+            if (foe.HealthPoints <= 0)
                 return true;
 
-            DragonAttacksPlayerSequence();
+            FoeAttacksPlayerSequence();
 
             if (player.HealthPoints <= 0)
                 return false;
@@ -70,24 +70,24 @@ public class Combat
         }
 
         output.Add("");
-        output.Add(messages.GetMessage("combat_dragon_header"));
-        output.Add(messages.GetMessage("stats_name") + dragon.Name);
-        output.Add(messages.GetMessage("stats_strength") + dragon.Strength);
-        output.Add(messages.GetMessage("stats_agility") + dragon.Agility);
-        output.Add(messages.GetMessage("stats_health") + dragon.HealthPoints);
-        output.Add(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(dragon.Weapon.Type));
-        output.Add(messages.GetMessage("stats_damage") + dragon.Weapon.MaxDamage);
+        output.Add(messages.GetMessage(foe.CombatHeaderKey));
+        output.Add(messages.GetMessage("stats_name") + foe.Name);
+        output.Add(messages.GetMessage("stats_strength") + foe.Strength);
+        output.Add(messages.GetMessage("stats_agility") + foe.Agility);
+        output.Add(messages.GetMessage("stats_health") + foe.HealthPoints);
+        output.Add(messages.GetMessage("stats_weapon") + messages.TranslateWeaponForDisplay(foe.Weapon.Type));
+        output.Add(messages.GetMessage("stats_damage") + foe.Weapon.MaxDamage);
 
         return string.Join(Environment.NewLine, output);
     }
 
-    public void PlayerAttacksDragonSequence()
+    public void PlayerAttacksFoeSequence()
     {
-        Console.WriteLine(player.Attack(dragon, messages));
+        Console.WriteLine(player.Attack(foe, messages));
     }
 
-    public void DragonAttacksPlayerSequence()
+    public void FoeAttacksPlayerSequence()
     {
-        Console.WriteLine(dragon.Attack(player, messages));
+        Console.WriteLine(foe.Attack(player, messages));
     }
 }

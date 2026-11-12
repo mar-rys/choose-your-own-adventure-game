@@ -38,7 +38,7 @@ public class CombatTests
     }
 
     [TestMethod]
-    public void Combat_Constructor_InitializesPlayerAndDragon()
+    public void Combat_Constructor_InitializesPlayerAndFoe()
     {
         Player player = new Player();
         Dragon dragon = new Dragon(new Die());
@@ -47,7 +47,7 @@ public class CombatTests
         Combat combat = new Combat(player, dragon, messages);
 
         Assert.AreSame(player, combat.player);
-        Assert.AreSame(dragon, combat.dragon);
+        Assert.AreSame(dragon, combat.foe);
     }
 
     [TestMethod]
