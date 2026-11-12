@@ -65,3 +65,13 @@ _Avoid_: Reward, treasure, drop
 **Toll**:
 The Gold the Bandit grabs when a player flees mid-fight: half their Gold, rounded down. It never makes Gold negative, and paying it does not defeat the Bandit.
 _Avoid_: Fine, penalty, robbery, fleeing cost
+
+### Progress
+
+**Defeat**:
+A player's loss in a fight, when their Health reaches zero, against any Foe. Retreating is never a Defeat.
+_Avoid_: Death, game over, loss, losing
+
+**Checkpoint**:
+A record of the player and the world, taken every time the player stands at the crossroads. After a Defeat, the player may return to the Checkpoint, which puts everything back as it was then. Returning is free and has no limit. A Checkpoint lasts only until the game is closed.
+_Avoid_: Save, save point, respawn, continue
