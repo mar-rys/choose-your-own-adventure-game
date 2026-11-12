@@ -186,7 +186,7 @@ All new text is available in English, Spanish, French and Italian.
 - Domain terms (Defeat, Checkpoint, Foe, Health, Gold, Rest, Merchant, Bandit, Dragon) are defined in `CONTEXT.md`. Use them in code, messages and test names. Say "return to the Checkpoint", not "respawn", "continue" or "load".
 - No ADR is recorded. In-memory Checkpoints are easy to reverse.
 - Only one encounter can happen between a Checkpoint and a Defeat: the west fight, or the Rest and the Dragon. A Merchant visit is always followed by a new Checkpoint first. Copying the Weapon's values is still required, because the Weapon is changed in place and future paths may change it between Checkpoints.
-- Suggested slicing for issues:
-  1. The Checkpoint module with capture and restore, and the Merchant and Bandit restore methods.
-  2. Retry after a Bandit Defeat: the adventure loop moved into its own routine, a Checkpoint taken at the crossroads, the return prompt and both message keys.
-  3. Retry after a Dragon Defeat: the Dragon encounter reports a Defeat, and the return prompt is reused.
+- Issues (in `issues/`):
+  1. Prefactor: the adventure loop as its own routine, with no visible change.
+  2. Return to the Checkpoint after a Bandit Defeat: the Checkpoint module, the Merchant and Bandit restore methods, a Checkpoint taken at the crossroads, the return prompt and both message keys.
+  3. Return to the Checkpoint after a Dragon Defeat: the Dragon encounter reports a Defeat, and the return prompt is reused.
