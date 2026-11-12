@@ -55,5 +55,13 @@ The one-time meeting with the Merchant, in which the player buys at most one ite
 _Avoid_: Shop, store, south event
 
 **Bandit encounter**:
-A meeting with the Bandit on the west path. The player fights or flees. It repeats on each trip west until the Bandit is defeated, after which the west path is quiet.
+A meeting with the Bandit on the west path. The player fights or flees. Gold changes hands only once blows are struck: winning earns Loot, and fleeing mid-fight costs the Toll. Fleeing before the fight is free. It repeats on each trip west until the Bandit is defeated, after which the west path is quiet.
 _Avoid_: Ambush, west event, bandit fight
+
+**Loot**:
+The Gold a player takes from the Bandit's purse after defeating it. It can be taken only once, because the defeated Bandit is gone for good.
+_Avoid_: Reward, treasure, drop
+
+**Toll**:
+The Gold the Bandit grabs when a player flees mid-fight: half their Gold, rounded down. It never makes Gold negative, and paying it does not defeat the Bandit.
+_Avoid_: Fine, penalty, robbery, fleeing cost
