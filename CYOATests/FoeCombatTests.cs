@@ -41,6 +41,27 @@ public class FoeCombatTests
         Assert.IsFalse(result.Contains("--- Dragon ---"));
     }
 
+    [DataTestMethod]
+    [DataRow("English")]
+    [DataRow("Spanish")]
+    [DataRow("French")]
+    [DataRow("Italian")]
+    public void CombatStatsDisplay_AgainstTheBandit_ShowsItsNameAndHeader_NotTheDragons(string language)
+    {
+        Messages messages = MessagesFor(language);
+        Player player = new Player { Name = "TestHero", Weapon = new Weapon("long sword", 12, "-)=====>") };
+        Combat combat = new Combat(player, new Bandit(new Die()), messages);
+
+        string result = combat.GetCombatStatsDisplay();
+
+        string banditHeader = messages.GetMessage("combat_bandit_header");
+        Assert.AreNotEqual("[combat_bandit_header]", banditHeader);
+        StringAssert.Contains(result, banditHeader);
+        StringAssert.Contains(result, "Grimble the Bandit");
+        StringAssert.Contains(result, messages.TranslateWeaponForDisplay("short sword"));
+        Assert.IsFalse(result.Contains(messages.GetMessage("combat_dragon_header")));
+    }
+
     // Strength 20 always hits (d20 <= 20).
     private static Player SureHitPlayer() => new Player
     {

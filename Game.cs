@@ -12,6 +12,7 @@ public class Game
 
         Dragon dragon = new Dragon(die);
         Merchant merchant = new Merchant();
+        Bandit bandit = new Bandit(die);
 
         // Language selection shown before Messages dictionary is loaded
         Console.WriteLine("Select language / Selecciona idioma / Choisissez la langue / Seleziona la lingua:");
@@ -57,6 +58,16 @@ public class Game
                     else if (selectedPath == "south")
                     {
                         HandleMerchantEncounter(player, merchant, messages);
+                    }
+                    else if (selectedPath == "west")
+                    {
+                        bool playerSurvived = HandleBanditEncounter(player, bandit, messages);
+
+                        if (!playerSurvived)
+                        {
+                            running = false;
+                            inAdventureMenu = false;
+                        }
                     }
                     else if (selectedPath == "north")
                     {
@@ -106,6 +117,7 @@ public class Game
         string trimmed = input.Trim().ToLower();
         return trimmed == "n" || trimmed == "north" ||
                trimmed == "s" || trimmed == "south" ||
+               trimmed == "w" || trimmed == "west" ||
                trimmed == "e" || trimmed == "exit";
     }
 
@@ -130,6 +142,9 @@ public class Game
 
             if (input == "south" || input == "s")
                 return "south";
+
+            if (input == "west" || input == "w")
+                return "west";
 
             if (input == "exit" || input == "e")
                 return "exit";
@@ -216,6 +231,58 @@ public class Game
             default:
                 throw new ArgumentOutOfRangeException(nameof(result), result, null);
         }
+    }
+
+    // Thin console layer over the Bandit and Combat. Returns false when the Bandit
+    // defeated the player and the game is over; otherwise the player is back at the crossroads.
+    private bool HandleBanditEncounter(Player player, Bandit bandit, Messages messages)
+    {
+        if (bandit.IsDefeated)
+        {
+            Console.WriteLine(messages.GetMessage("bandit_empty_camp"));
+            return true;
+        }
+
+        Console.WriteLine(messages.GetMessage("west_path_narrative"));
+        Console.WriteLine(string.Format(messages.GetMessage("bandit_intro"), bandit.Name));
+        Console.WriteLine(messages.GetMessage("bandit_stats_intro"));
+        bandit.DisplayStats(messages);
+
+        while (true)
+        {
+            Console.WriteLine(messages.GetMessage("bandit_encounter_prompt"));
+            Console.Write(messages.GetMessage("enter_choice"));
+            string? input = Console.ReadLine()?.Trim().ToLower();
+
+            if (input == "r" || input == "retreat")
+            {
+                Console.WriteLine(messages.GetMessage("bandit_free_retreat"));
+                Console.WriteLine(messages.GetMessage("bandit_return"));
+                return true;
+            }
+
+            if (input == "a" || input == "attack")
+                return FightBandit(player, bandit, messages);
+
+            Console.WriteLine(messages.GetMessage("invalid"));
+        }
+    }
+
+    private static bool FightBandit(Player player, Bandit bandit, Messages messages)
+    {
+        Combat combat = new Combat(player, bandit, messages);
+        bool playerWon = combat.StartCombat();
+
+        if (playerWon)
+            bandit.MarkDefeated();
+        else if (!combat.PlayerRetreated)
+        {
+            Console.WriteLine(messages.GetMessage("bandit_defeat"));
+            return false;
+        }
+
+        Console.WriteLine(messages.GetMessage("bandit_return"));
+        return true;
     }
 
     private void HandleDragonEncounter(Player player, Dragon dragon, Messages messages)

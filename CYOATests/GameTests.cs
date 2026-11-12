@@ -183,10 +183,24 @@ public class GameTests
     }
 
     [TestMethod]
+    public void IsValidPathChoice_ReturnsTrue_ForW()
+    {
+        Game game = new Game();
+        Assert.IsTrue(game.IsValidPathChoice("w"));
+    }
+
+    [TestMethod]
+    public void IsValidPathChoice_ReturnsTrue_ForWest()
+    {
+        Game game = new Game();
+        Assert.IsTrue(game.IsValidPathChoice("west"));
+    }
+
+    [TestMethod]
     public void IsValidPathChoice_ReturnsFalse_ForInvalidInput()
     {
         Game game = new Game();
-        Assert.IsFalse(game.IsValidPathChoice("west"));
+        Assert.IsFalse(game.IsValidPathChoice("up"));
     }
 
     [TestMethod]
