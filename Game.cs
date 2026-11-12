@@ -44,43 +44,8 @@ public class Game
                 Player player = new Player();
                 player.CreateCharacter(messages);
 
-                bool inAdventureMenu = true;
-                while (inAdventureMenu)
-                {
-                    string selectedPath = PromptForPath(messages);
-
-                    if (selectedPath == "exit")
-                    {
-                        Console.WriteLine(messages.GetMessage("adventure_ends"));
-                        running = false;
-                        inAdventureMenu = false;
-                    }
-                    else if (selectedPath == "south")
-                    {
-                        HandleMerchantEncounter(player, merchant, messages);
-                    }
-                    else if (selectedPath == "west")
-                    {
-                        bool playerSurvived = HandleBanditEncounter(player, bandit, messages);
-
-                        if (!playerSurvived)
-                        {
-                            running = false;
-                            inAdventureMenu = false;
-                        }
-                    }
-                    else if (selectedPath == "north")
-                    {
-                        int recovered = player.Rest();
-                        if (recovered > 0)
-                            Console.WriteLine(string.Format(messages.GetMessage("rest_recovered"), recovered, player.HealthPoints));
-
-                        HandleDragonEncounter(player, dragon, messages);
-
-                        running = false;
-                        inAdventureMenu = false;
-                    }
-                }
+                RunAdventure(player, merchant, bandit, dragon, messages);
+                running = false;
             }
             else if (choice == "2")
             {
@@ -127,6 +92,41 @@ public class Game
         string trimmed = input.Trim().ToLower();
         return trimmed == "a" || trimmed == "attack" ||
                trimmed == "r" || trimmed == "retreat";
+    }
+
+    // The crossroads loop: asks for a path and runs that encounter until the adventure ends
+    // (exit, a Defeat by the Bandit, or the trip north to the Dragon).
+    private void RunAdventure(Player player, Merchant merchant, Bandit bandit, Dragon dragon, Messages messages)
+    {
+        while (true)
+        {
+            string selectedPath = PromptForPath(messages);
+
+            if (selectedPath == "exit")
+            {
+                Console.WriteLine(messages.GetMessage("adventure_ends"));
+                return;
+            }
+
+            if (selectedPath == "south")
+            {
+                HandleMerchantEncounter(player, merchant, messages);
+            }
+            else if (selectedPath == "west")
+            {
+                if (!HandleBanditEncounter(player, bandit, messages))
+                    return;
+            }
+            else if (selectedPath == "north")
+            {
+                int recovered = player.Rest();
+                if (recovered > 0)
+                    Console.WriteLine(string.Format(messages.GetMessage("rest_recovered"), recovered, player.HealthPoints));
+
+                HandleDragonEncounter(player, dragon, messages);
+                return;
+            }
+        }
     }
 
     private string PromptForPath(Messages messages)
