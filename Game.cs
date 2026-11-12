@@ -95,7 +95,7 @@ public class Game
     }
 
     // The crossroads loop: takes a Checkpoint, asks for a path and runs that encounter until the
-    // adventure ends (exit, a Defeat by the Bandit with no return, or the trip north to the Dragon).
+    // adventure ends (exit, a Defeat with no return, or a Dragon win or retreat).
     private void RunAdventure(Player player, Merchant merchant, Bandit bandit, Dragon dragon, Messages messages)
     {
         while (true)
@@ -115,14 +115,9 @@ public class Game
             }
             else if (selectedPath == "west")
             {
-                if (!HandleBanditEncounter(player, bandit, messages))
-                {
-                    if (!PromptForReturnToCheckpoint(messages))
-                        return;
-
-                    checkpoint.Restore(player, merchant, bandit, dragon);
-                    Console.WriteLine(string.Format(messages.GetMessage("checkpoint_return"), player.HealthPoints, player.Gold));
-                }
+                if (!HandleBanditEncounter(player, bandit, messages) &&
+                    !OfferReturnToCheckpoint(checkpoint, player, merchant, bandit, dragon, messages))
+                    return;
             }
             else if (selectedPath == "north")
             {
@@ -130,10 +125,24 @@ public class Game
                 if (recovered > 0)
                     Console.WriteLine(string.Format(messages.GetMessage("rest_recovered"), recovered, player.HealthPoints));
 
-                HandleDragonEncounter(player, dragon, messages);
-                return;
+                // A Dragon win or retreat ends the adventure; only a Defeat offers a return.
+                if (HandleDragonEncounter(player, dragon, messages) ||
+                    !OfferReturnToCheckpoint(checkpoint, player, merchant, bandit, dragon, messages))
+                    return;
             }
         }
+    }
+
+    // Called after a Defeat. Asks whether to return to the Checkpoint; on yes, restores it and shows
+    // the awakening line. Returns true when the player is back at the crossroads.
+    private static bool OfferReturnToCheckpoint(Checkpoint checkpoint, Player player, Merchant merchant, Bandit bandit, Dragon dragon, Messages messages)
+    {
+        if (!PromptForReturnToCheckpoint(messages))
+            return false;
+
+        checkpoint.Restore(player, merchant, bandit, dragon);
+        Console.WriteLine(string.Format(messages.GetMessage("checkpoint_return"), player.HealthPoints, player.Gold));
+        return true;
     }
 
     // Asked after a Defeat. Returns true when the player chooses to return to the Checkpoint,
@@ -261,7 +270,7 @@ public class Game
     }
 
     // Thin console layer over the Bandit and Combat. Returns false when the Bandit
-    // defeated the player and the game is over; otherwise the player is back at the crossroads.
+    // defeated the player; otherwise the player is back at the crossroads.
     private bool HandleBanditEncounter(Player player, Bandit bandit, Messages messages)
     {
         if (bandit.IsDefeated)
@@ -320,7 +329,9 @@ public class Game
         return true;
     }
 
-    private void HandleDragonEncounter(Player player, Dragon dragon, Messages messages)
+    // Thin console layer over the Dragon and Combat. Returns false when the Dragon defeated the
+    // player; a win or a retreat returns true. Either way the ending has already been shown.
+    private bool HandleDragonEncounter(Player player, Dragon dragon, Messages messages)
     {
         Console.WriteLine(messages.GetMessage("north_path_narrative"));
 
@@ -342,24 +353,19 @@ public class Game
                 bool playerWon = combat.StartCombat();
 
                 if (combat.PlayerRetreated)
-                {
-                    return; //combat already handled retreat message
-                }
-                else
-                {
-                   EndGame(playerWon, false, messages); 
-                }
-                
-                return;
+                    return true; // combat already showed the retreat message
+
+                EndGame(playerWon, false, messages);
+                return playerWon;
             }
 
-        if (input == "r" || input == "retreat")
-        {
-            Console.WriteLine(messages.GetMessage("retreat"));
-            return;
-        }
+            if (input == "r" || input == "retreat")
+            {
+                Console.WriteLine(messages.GetMessage("retreat"));
+                return true;
+            }
 
-        Console.WriteLine(messages.GetMessage("invalid"));
+            Console.WriteLine(messages.GetMessage("invalid"));
+        }
     }
-}
 }

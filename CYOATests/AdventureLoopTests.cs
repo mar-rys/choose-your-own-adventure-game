@@ -69,6 +69,13 @@ public class AdventureLoopTests
     private static Player CreatePlayerCertainToLose() => CreatePlayer(20, 0, 1, gold: 50);
     private static Bandit CreateBanditCertainToWin() => CreateBandit(20, 0, 1000);
 
+    private static Dragon CreateDragon(int strength, int agility, int health) =>
+        new Dragon(new Die()) { Strength = strength, Agility = agility, HealthPoints = health };
+
+    // The same rig against the Dragon. The certain-to-lose Player's starting Health is 0, so the Rest
+    // on the way north recovers nothing and their Health before the Rest is still 1.
+    private static Dragon CreateDragonCertainToWin() => CreateDragon(20, 0, 1000);
+
     [TestMethod]
     public void ABanditDefeat_ThenReturningToTheCheckpoint_PutsThePlayerBackAtTheCrossroads()
     {
@@ -178,6 +185,65 @@ public class AdventureLoopTests
         Assert.IsTrue(output.IndexOf(messages.GetMessage("adventure_ends"), returned) > returned);
         Assert.IsFalse(output.Contains(messages.GetMessage("defeat_retry_prompt")),
             "A retreat is never a Defeat, so no return prompt should be shown.");
+    }
+
+    [TestMethod]
+    public void ADragonDefeat_ThenReturningToTheCheckpoint_PutsThePlayerBackAtTheCrossroads()
+    {
+        Messages messages = GetMessages("English");
+        Player player = CreatePlayerCertainToLose();
+        Dragon dragon = CreateDragonCertainToWin();
+
+        string output = RunAdventure(player, new Merchant(), CreateBandit(10, 10, 10), dragon, messages, "n\na\n1\ne\n");
+
+        int defeat = output.IndexOf(messages.GetMessage("defeat"));
+        Assert.IsTrue(defeat >= 0, "The Dragon defeat ending should be shown.");
+        int prompt = output.IndexOf(messages.GetMessage("defeat_retry_prompt"), defeat);
+        Assert.IsTrue(prompt > defeat, "The return prompt should follow the defeat ending.");
+        int awoken = output.IndexOf(string.Format(messages.GetMessage("checkpoint_return"), 1, 50), prompt);
+        Assert.IsTrue(awoken > prompt, "The awakening line, with the Health and Gold from before the Rest, should follow.");
+        int pathPrompt = output.IndexOf(messages.GetMessage("path_prompt_full"), awoken);
+        Assert.IsTrue(pathPrompt > awoken, "The path prompt should follow the awakening line.");
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("adventure_ends"), pathPrompt) > pathPrompt);
+
+        Assert.AreEqual(1, player.HealthPoints);
+        Assert.AreEqual(1000, dragon.HealthPoints);
+    }
+
+    [TestMethod]
+    public void ADragonWin_EndsTheGameWithTheVictoryEnding_AndNoReturnPrompt()
+    {
+        Messages messages = GetMessages("English");
+        // The player always wounds the Dragon (which never blocks), and any damage finishes it.
+        Player player = CreatePlayer(20, 20, 10);
+        player.StartingHealth = 10;
+
+        // The trailing `1` and `e` would be read if the loop wrongly kept going.
+        string output = RunAdventure(player, new Merchant(), CreateBandit(10, 10, 10), CreateDragon(20, 0, 1),
+            messages, "n\na\n1\ne\n");
+
+        int victory = output.IndexOf(messages.GetMessage("victory"));
+        Assert.IsTrue(victory >= 0, "The victory ending should be shown.");
+        Assert.IsFalse(output.Contains(messages.GetMessage("defeat_retry_prompt")),
+            "A Dragon win is not a Defeat, so no return prompt should be shown.");
+        Assert.AreEqual(-1, output.IndexOf(messages.GetMessage("path_prompt_full"), victory),
+            "The game should end after the victory.");
+    }
+
+    [TestMethod]
+    public void ARetreatFromTheDragon_EndsTheGameWithTheRetreatEnding_AndNoReturnPrompt()
+    {
+        Messages messages = GetMessages("English");
+
+        string output = RunAdventure(CreatePlayer(10, 10, 10), new Merchant(), CreateBandit(10, 10, 10),
+            CreateDragon(10, 10, 10), messages, "n\nr\n1\ne\n");
+
+        int retreat = output.IndexOf(messages.GetMessage("retreat"));
+        Assert.IsTrue(retreat >= 0, "The retreat ending should be shown.");
+        Assert.IsFalse(output.Contains(messages.GetMessage("defeat_retry_prompt")),
+            "A retreat is never a Defeat, so no return prompt should be shown.");
+        Assert.AreEqual(-1, output.IndexOf(messages.GetMessage("path_prompt_full"), retreat),
+            "The game should end after the retreat.");
     }
 
     [TestMethod]
