@@ -1,5 +1,7 @@
 public class Player
 {
+    public const int RestDie = 6;
+
     private readonly Die _die = new Die();
 
     public string Name { get; set; } = "";
@@ -9,6 +11,7 @@ public class Player
     public int Strength { get; set; }
     public int Agility { get; set; }
     public int HealthPoints { get; set; }
+    public int StartingHealth { get; set; }
     public int Gold { get; set; }
 
     public Weapon? Weapon { get; set; }
@@ -123,6 +126,7 @@ public class Player
     {
         PromptRoll(messages.GetMessage("roll_health"), messages);
         HealthPoints = _die.Roll(20) + strengthModifier;
+        StartingHealth = HealthPoints;
     }
 
     private void RollGold(Messages messages)
@@ -173,6 +177,17 @@ public class Player
     public int ApplyProtection(int rawDamage)
     {
         return Math.Max(0, rawDamage - Protection);
+    }
+
+    // Recovers d6 Health, never above starting Health. Returns the amount recovered.
+    public int Rest()
+    {
+        if (HealthPoints >= StartingHealth)
+            return 0;
+
+        int before = HealthPoints;
+        HealthPoints = Math.Min(StartingHealth, HealthPoints + _die.Roll(RestDie));
+        return HealthPoints - before;
     }
 
     public int RollAttack()

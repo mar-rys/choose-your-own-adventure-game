@@ -138,7 +138,8 @@ public class MessagesTests
 
         string[] requiredKeys = { "welcome", "menu",
                                    "choose_path", "path_north", "path_south", "attack_prompt",
-                                   "victory", "defeat", "retreat", "invalid", "goodbye" };
+                                   "victory", "defeat", "retreat", "invalid", "goodbye",
+                                   "rest_recovered" };
 
         foreach (string key in requiredKeys)
         {

@@ -60,6 +60,10 @@ public class Game
                     }
                     else if (selectedPath == "north")
                     {
+                        int recovered = player.Rest();
+                        if (recovered > 0)
+                            Console.WriteLine(string.Format(messages.GetMessage("rest_recovered"), recovered, player.HealthPoints));
+
                         HandleDragonEncounter(player, dragon, messages);
 
                         running = false;

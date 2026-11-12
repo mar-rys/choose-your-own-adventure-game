@@ -42,6 +42,39 @@ public class PlayerTests
 
         Assert.AreEqual(0, player.ApplyProtection(2));
     }
+
+    [TestMethod]
+    public void Rest_OneBelowStartingHealth_RecoversExactlyToStartingHealth()
+    {
+        Player player = new Player { StartingHealth = 10, HealthPoints = 9 };
+
+        int recovered = player.Rest();
+
+        Assert.AreEqual(10, player.HealthPoints);
+        Assert.AreEqual(1, recovered);
+    }
+
+    [TestMethod]
+    public void Rest_AtFullHealth_ChangesNothingAndReturns0()
+    {
+        Player player = new Player { StartingHealth = 15, HealthPoints = 15 };
+
+        int recovered = player.Rest();
+
+        Assert.AreEqual(15, player.HealthPoints);
+        Assert.AreEqual(0, recovered);
+    }
+
+    [TestMethod]
+    public void Rest_FarBelowStartingHealth_RecoversOneToSix()
+    {
+        Player player = new Player { StartingHealth = 20, HealthPoints = 1 };
+
+        int recovered = player.Rest();
+
+        Assert.IsTrue(player.HealthPoints >= 2 && player.HealthPoints <= 7, $"Health was {player.HealthPoints}");
+        Assert.AreEqual(player.HealthPoints - 1, recovered);
+    }
 }
 
 [TestClass]
@@ -97,6 +130,17 @@ public class PlayerCharacterCreationTests
         RunScriptedCreation(player, GetMessages(), ScriptedCreation);
 
         Assert.IsTrue(player.Gold >= 10 && player.Gold <= 200, $"Gold was {player.Gold}");
+    }
+
+    [TestMethod]
+    public void CreateCharacter_RecordsStartingHealthEqualToRolledHealth()
+    {
+        Player player = new Player();
+
+        RunScriptedCreation(player, GetMessages(), ScriptedCreation);
+
+        Assert.AreNotEqual(0, player.StartingHealth);
+        Assert.AreEqual(player.HealthPoints, player.StartingHealth);
     }
 
     [TestMethod]
