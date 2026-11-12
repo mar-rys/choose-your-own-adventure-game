@@ -64,23 +64,120 @@ public class AdventureLoopTests
         return writer.ToString();
     }
 
+    // The player always wounds the Bandit (which never blocks) but can't finish it, never blocks,
+    // and one Bandit hit of at least 1 damage takes their last Health.
+    private static Player CreatePlayerCertainToLose() => CreatePlayer(20, 0, 1, gold: 50);
+    private static Bandit CreateBanditCertainToWin() => CreateBandit(20, 0, 1000);
+
     [TestMethod]
-    public void ADefeatByTheBandit_ShowsTheBanditDefeatEnding_AndTheLoopReturns()
+    public void ABanditDefeat_ThenReturningToTheCheckpoint_PutsThePlayerBackAtTheCrossroads()
     {
         Messages messages = GetMessages("English");
-        // The player never hits or blocks, and one hit of at least 1 damage takes their last Health.
-        Player player = CreatePlayer(0, 0, 1);
-        Bandit bandit = CreateBandit(20, 0, 1000);
+        Player player = CreatePlayerCertainToLose();
+        Bandit bandit = CreateBanditCertainToWin();
 
-        // The trailing `e` would end the adventure if the loop wrongly asked for a path again.
-        string output = RunAdventure(player, new Merchant(), bandit, new Dragon(new Die()), messages, "w\na\ne\n");
+        string output = RunAdventure(player, new Merchant(), bandit, new Dragon(new Die()), messages, "w\na\n1\ne\n");
 
         int defeat = output.IndexOf(messages.GetMessage("bandit_defeat"));
         Assert.IsTrue(defeat >= 0, "The Bandit defeat ending should be shown.");
-        Assert.AreEqual(-1, output.IndexOf(messages.GetMessage("path_prompt_full"), defeat),
-            "No path prompt should follow the Bandit defeat ending.");
+        int prompt = output.IndexOf(messages.GetMessage("defeat_retry_prompt"), defeat);
+        Assert.IsTrue(prompt > defeat, "The return prompt should follow the defeat ending.");
+        int awoken = output.IndexOf(string.Format(messages.GetMessage("checkpoint_return"), 1, 50), prompt);
+        Assert.IsTrue(awoken > prompt, "The awakening line, with the Health and Gold from before the fight, should follow.");
+        int pathPrompt = output.IndexOf(messages.GetMessage("path_prompt_full"), awoken);
+        Assert.IsTrue(pathPrompt > awoken, "The path prompt should follow the awakening line.");
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("adventure_ends"), pathPrompt) > pathPrompt);
+
+        Assert.AreEqual(1, player.HealthPoints);
+        Assert.AreEqual(1000, bandit.HealthPoints);
+    }
+
+    [TestMethod]
+    public void ABanditDefeat_ThenEndingTheAdventure_EndsTheGameWithNoAwakening()
+    {
+        Messages messages = GetMessages("English");
+
+        // The trailing `e` would end the adventure if the loop wrongly asked for a path again.
+        string output = RunAdventure(CreatePlayerCertainToLose(), new Merchant(), CreateBanditCertainToWin(),
+            new Dragon(new Die()), messages, "w\na\n2\ne\n");
+
+        int defeat = output.IndexOf(messages.GetMessage("bandit_defeat"));
+        Assert.IsTrue(defeat >= 0, "The Bandit defeat ending should be shown.");
+        int prompt = output.IndexOf(messages.GetMessage("defeat_retry_prompt"), defeat);
+        Assert.IsTrue(prompt > defeat, "The return prompt should follow the defeat ending.");
+        Assert.IsFalse(output.Contains(string.Format(messages.GetMessage("checkpoint_return"), 1, 50)),
+            "No awakening line should be shown.");
+        Assert.AreEqual(-1, output.IndexOf(messages.GetMessage("path_prompt_full"), prompt),
+            "No path prompt should follow the choice to end the adventure.");
         Assert.IsFalse(output.Contains(messages.GetMessage("adventure_ends")),
-            "The loop should return after the Defeat without reading another path.");
+            "The loop should return without reading another path.");
+    }
+
+    [TestMethod]
+    public void InvalidInputAtTheReturnPrompt_ShowsTheInvalidMessage_AndAsksAgain()
+    {
+        Messages messages = GetMessages("English");
+
+        string output = RunAdventure(CreatePlayerCertainToLose(), new Merchant(), CreateBanditCertainToWin(),
+            new Dragon(new Die()), messages, "w\na\nx\n2\n");
+
+        int firstPrompt = output.IndexOf(messages.GetMessage("defeat_retry_prompt"));
+        Assert.IsTrue(firstPrompt >= 0, "The return prompt should be shown.");
+        int invalid = output.IndexOf(messages.GetMessage("invalid"), firstPrompt);
+        Assert.IsTrue(invalid > firstPrompt, "The invalid-input message should follow the bad choice.");
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("defeat_retry_prompt"), invalid) > invalid,
+            "The return prompt should be asked again.");
+    }
+
+    [TestMethod]
+    public void TwoBanditDefeatsInARow_EachFollowedByAReturn_BothComeBackToTheCrossroads()
+    {
+        Messages messages = GetMessages("English");
+        Player player = CreatePlayerCertainToLose();
+        Bandit bandit = CreateBanditCertainToWin();
+
+        string output = RunAdventure(player, new Merchant(), bandit, new Dragon(new Die()), messages,
+            "w\na\n1\nw\na\n1\ne\n");
+
+        string awakening = string.Format(messages.GetMessage("checkpoint_return"), 1, 50);
+        Assert.AreEqual(2, output.Split(awakening).Length - 1, "Both Defeats should end with an awakening.");
+        int secondAwakening = output.LastIndexOf(awakening);
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("adventure_ends"), secondAwakening) > secondAwakening,
+            "The player should be back at the path prompt after the second return.");
+        Assert.AreEqual(1, player.HealthPoints);
+        Assert.AreEqual(1000, bandit.HealthPoints);
+    }
+
+    [TestMethod]
+    public void AFreeRetreatFromTheBandit_ReturnsToTheCrossroads_WithNoReturnPrompt()
+    {
+        Messages messages = GetMessages("English");
+
+        string output = RunAdventure(CreatePlayer(10, 10, 10), new Merchant(), CreateBandit(10, 10, 10),
+            new Dragon(new Die()), messages, "w\nr\ne\n");
+
+        int returned = output.IndexOf(messages.GetMessage("bandit_return"));
+        Assert.IsTrue(returned >= 0, "The player should walk back to the crossroads.");
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("adventure_ends"), returned) > returned);
+        Assert.IsFalse(output.Contains(messages.GetMessage("defeat_retry_prompt")),
+            "A retreat is never a Defeat, so no return prompt should be shown.");
+    }
+
+    [TestMethod]
+    public void AMidFightRetreatFromTheBandit_ReturnsToTheCrossroads_WithNoReturnPrompt()
+    {
+        Messages messages = GetMessages("English");
+        // The player always hits but can't finish the Bandit; the Bandit always misses.
+        Player player = CreatePlayer(20, 10, 10, gold: 60);
+        Bandit bandit = CreateBandit(0, 0, 1000);
+
+        string output = RunAdventure(player, new Merchant(), bandit, new Dragon(new Die()), messages, "w\na\nr\ne\n");
+
+        int returned = output.IndexOf(messages.GetMessage("bandit_return"));
+        Assert.IsTrue(returned >= 0, "The player should walk back to the crossroads.");
+        Assert.IsTrue(output.IndexOf(messages.GetMessage("adventure_ends"), returned) > returned);
+        Assert.IsFalse(output.Contains(messages.GetMessage("defeat_retry_prompt")),
+            "A retreat is never a Defeat, so no return prompt should be shown.");
     }
 
     [TestMethod]

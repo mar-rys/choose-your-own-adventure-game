@@ -49,4 +49,10 @@ public class Bandit : Foe
         player.Gold -= taken;
         return taken;
     }
+
+    // Lets a Checkpoint put back whether the Bandit had been defeated.
+    public void RestoreDefeated(bool defeated)
+    {
+        IsDefeated = defeated;
+    }
 }

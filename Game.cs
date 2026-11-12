@@ -94,12 +94,13 @@ public class Game
                trimmed == "r" || trimmed == "retreat";
     }
 
-    // The crossroads loop: asks for a path and runs that encounter until the adventure ends
-    // (exit, a Defeat by the Bandit, or the trip north to the Dragon).
+    // The crossroads loop: takes a Checkpoint, asks for a path and runs that encounter until the
+    // adventure ends (exit, a Defeat by the Bandit with no return, or the trip north to the Dragon).
     private void RunAdventure(Player player, Merchant merchant, Bandit bandit, Dragon dragon, Messages messages)
     {
         while (true)
         {
+            Checkpoint checkpoint = Checkpoint.Take(player, merchant, bandit, dragon);
             string selectedPath = PromptForPath(messages);
 
             if (selectedPath == "exit")
@@ -115,7 +116,13 @@ public class Game
             else if (selectedPath == "west")
             {
                 if (!HandleBanditEncounter(player, bandit, messages))
-                    return;
+                {
+                    if (!PromptForReturnToCheckpoint(messages))
+                        return;
+
+                    checkpoint.Restore(player, merchant, bandit, dragon);
+                    Console.WriteLine(string.Format(messages.GetMessage("checkpoint_return"), player.HealthPoints, player.Gold));
+                }
             }
             else if (selectedPath == "north")
             {
@@ -126,6 +133,26 @@ public class Game
                 HandleDragonEncounter(player, dragon, messages);
                 return;
             }
+        }
+    }
+
+    // Asked after a Defeat. Returns true when the player chooses to return to the Checkpoint,
+    // false when they end the adventure.
+    private static bool PromptForReturnToCheckpoint(Messages messages)
+    {
+        while (true)
+        {
+            Console.WriteLine(messages.GetMessage("defeat_retry_prompt"));
+            Console.Write(messages.GetMessage("enter_choice"));
+            string? input = Console.ReadLine()?.Trim();
+
+            if (input == "1")
+                return true;
+
+            if (input == "2")
+                return false;
+
+            Console.WriteLine(messages.GetMessage("invalid"));
         }
     }
 

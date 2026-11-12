@@ -60,4 +60,10 @@ public class Merchant
     {
         EncounterUsed = true;
     }
+
+    // Lets a Checkpoint put back whether the encounter had been used.
+    public void RestoreEncounterUsed(bool encounterUsed)
+    {
+        EncounterUsed = encounterUsed;
+    }
 }
