@@ -116,9 +116,10 @@ public class BanditEncounterTests
     {
         Messages messages = GetMessages(language);
         Bandit bandit = CreateBandit(5, 5, 5);
-        bandit.MarkDefeated();
+        Player player = CreatePlayer(10, 10, 10);
+        bandit.Loot(player);
 
-        (bool survived, string output) = RunEncounter(CreatePlayer(10, 10, 10), bandit, messages, "");
+        (bool survived, string output) = RunEncounter(player, bandit, messages, "");
 
         Assert.IsTrue(survived);
         StringAssert.Contains(output, messages.GetMessage("bandit_empty_camp"));
@@ -144,11 +145,11 @@ public class BanditEncounterTests
     }
 
     [TestMethod]
-    public void WinningTheFight_MarksTheBanditDefeated_AndLaterTripsFindTheEmptyCamp()
+    public void WinningTheFight_LootsTheBandit_AndLaterTripsFindTheEmptyCamp()
     {
         Messages messages = GetMessages("English");
         // The player always hits, and the Bandit can't block or survive one hit.
-        Player player = CreatePlayer(20, 10, 10);
+        Player player = CreatePlayer(20, 10, 10, gold: 50);
         Bandit bandit = CreateBandit(12, 0, 1);
 
         (bool survived, string output) = RunEncounter(player, bandit, messages, "a\n");
@@ -156,6 +157,8 @@ public class BanditEncounterTests
         Assert.IsTrue(survived);
         Assert.IsTrue(bandit.IsDefeated);
         StringAssert.Contains(output, messages.GetMessage("bandit_defeated_narrative"));
+        int looted = player.Gold - 50;
+        StringAssert.Contains(output, string.Format(messages.GetMessage("bandit_gold_looted"), looted));
         StringAssert.Contains(output, messages.GetMessage("bandit_return"));
         Assert.IsFalse(output.Contains("dragon", StringComparison.OrdinalIgnoreCase),"Combat lines against the Bandit should never mention a dragon.");
 
@@ -164,7 +167,7 @@ public class BanditEncounterTests
     }
 
     [TestMethod]
-    public void RetreatingMidFight_ReturnsToTheCrossroads_AndTheBanditKeepsItsWounds()
+    public void RetreatingMidFight_PaysTheToll_ReturnsToTheCrossroads_AndTheBanditKeepsItsWounds()
     {
         Messages messages = GetMessages("English");
         // The player always hits but can't finish the Bandit; the Bandit always misses.
@@ -176,6 +179,8 @@ public class BanditEncounterTests
         Assert.IsTrue(survived);
         Assert.IsFalse(bandit.IsDefeated);
         Assert.IsTrue(bandit.HealthPoints < 1000, "The player's hit should have wounded the Bandit.");
+        StringAssert.Contains(output, string.Format(messages.GetMessage("bandit_gold_lost"), 30));
+        Assert.AreEqual(30, player.Gold);
         StringAssert.Contains(output, messages.GetMessage("bandit_return"));
         Assert.AreEqual(10, player.HealthPoints);
 

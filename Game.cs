@@ -274,8 +274,16 @@ public class Game
         bool playerWon = combat.StartCombat();
 
         if (playerWon)
-            bandit.MarkDefeated();
-        else if (!combat.PlayerRetreated)
+        {
+            int looted = bandit.Loot(player);
+            Console.WriteLine(string.Format(messages.GetMessage("bandit_gold_looted"), looted));
+        }
+        else if (combat.PlayerRetreated)
+        {
+            int taken = bandit.TakeToll(player);
+            Console.WriteLine(string.Format(messages.GetMessage("bandit_gold_lost"), taken));
+        }
+        else
         {
             Console.WriteLine(messages.GetMessage("bandit_defeat"));
             return false;
